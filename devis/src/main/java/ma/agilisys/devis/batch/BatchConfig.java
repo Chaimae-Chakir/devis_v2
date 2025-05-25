@@ -6,6 +6,7 @@ import ma.agilisys.devis.models.Devis;
 import ma.agilisys.devis.models.DevisPdfFile;
 import ma.agilisys.devis.repositories.DevisPdfFileRepository;
 import ma.agilisys.devis.repositories.DevisRepository;
+import ma.agilisys.devis.services.DocumentMessageService;
 import ma.agilisys.devis.services.impl.DevisPdfGeneratorImpl;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -35,6 +36,7 @@ public class BatchConfig {
     private final DevisPdfGeneratorImpl pdfGenerator;
     private final DevisRepository devisRepository;
     private final DevisPdfFileRepository devisPdfFileRepository;
+    private final DocumentMessageService documentMessageService;
 
     @Bean
     public Job generatePdfJob(JobRepository jobRepository, Step generatePdfStep) {
@@ -89,6 +91,10 @@ public class BatchConfig {
                 if (devis.getMeta() != null) {
                     devis.getMeta().setOffrePdfUrl("/api/devis/" + devis.getId() + "/pdf");
                 }
+
+                // Envoyer le message à RabbitMQ
+                documentMessageService.sendDocumentMessage(devis);
+
                 return devis;
             } catch (Exception e) {
                 log.error("Erreur lors de la génération du PDF pour le devis ID: {}", devis.getId(), e);

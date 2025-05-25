@@ -13,7 +13,7 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   batch:
     job:
-      enabled: false
+      enabled: true
     jdbc:
       initialize-schema: always
   sql:
@@ -26,10 +26,17 @@ spring:
         jwt:
           issuer-uri: http://keycloak:8080/realms/devis
           jwk-set-uri: http://keycloak:8080/realms/devis/protocol/openid-connect/certs
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
 
 logging:
   level:
     org.springframework.security: DEBUG
+    org.springframework.amqp: DEBUG
+    ma.agilisys.devis: DEBUG
 
 generation:
   batch-delay: 120000
@@ -41,4 +48,4 @@ keycloak:
   public-client: true
   principal-attribute: preferred_username
   credentials:
-    secret: 56y6rr2sBfPqOka2yT9upf4FqNR9LvXG
+    secret: us0uh5uWIHQE0CmElygvvSgVT7fkILXl
