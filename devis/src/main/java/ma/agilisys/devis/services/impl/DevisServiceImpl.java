@@ -61,19 +61,33 @@ public class DevisServiceImpl implements DevisService {
     @Transactional
     @Override
     public DevisResponseDTO createDevis(DevisRequestDTO devisRequestDTO) {
-        ClientResponseDto client = clientService.createClient(devisRequestDTO.getClient());
-        Client clientEntity = clientRepository.findById(client.getId()).orElseThrow(() -> new EntityNotFoundException("client no found"));
+        Client clientEntity;
+        
+        // Vérifier si le client existe déjà par son ICE
+        if (clientService.existsByIce(devisRequestDTO.getClient().getIce())) {
+            // Récupérer le client existant
+            clientEntity = clientRepository.findByIce(devisRequestDTO.getClient().getIce())
+                    .orElseThrow(() -> new EntityNotFoundException("Client non trouvé avec l'ICE: " + devisRequestDTO.getClient().getIce()));
+        } else {
+            // Créer un nouveau client
+            ClientResponseDto newClient = clientService.createClient(devisRequestDTO.getClient());
+            clientEntity = clientRepository.findById(newClient.getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Client non trouvé après création"));
+        }
+
         Devis devis = devisMapper.toEntity(devisRequestDTO);
         devis.setNumero(devisNumberGenerator.generateUniqueNumber());
         devis.setStatut(Constants.DRAFT_STATUS);
         devis.setClient(clientEntity);
         devis.setDateCreation(ZonedDateTime.now());
-        devis.setCreatedBy(client.getNom());
+        devis.setCreatedBy(clientEntity.getNom());
+        
         List<DevisLigne> lignes = devisRequestDTO.getLignes().stream()
                 .map(devisLigneMapper::toEntity)
                 .toList();
         lignes.forEach(ligne -> ligne.setDevis(devis));
         devis.setLignes(lignes);
+        
         DevisMeta meta = DevisMeta.builder()
                 .conditions(devisRequestDTO.getConditions())
                 .offreFonctionnelle(devisRequestDTO.getOffreFonctionnelle())
@@ -84,6 +98,7 @@ public class DevisServiceImpl implements DevisService {
                 .devis(devis)
                 .build();
         devis.setMeta(meta);
+        
         Devis savedDevis = devisRepository.save(devis);
         return devisMapper.toDto(savedDevis);
     }
