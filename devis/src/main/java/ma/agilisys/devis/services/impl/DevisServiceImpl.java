@@ -3,10 +3,12 @@ package ma.agilisys.devis.services.impl;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import ma.agilisys.devis.dtos.ClientRequestDto;
 import ma.agilisys.devis.dtos.ClientResponseDto;
 import ma.agilisys.devis.dtos.DevisPageDto;
 import ma.agilisys.devis.dtos.DevisRequestDTO;
 import ma.agilisys.devis.dtos.DevisResponseDTO;
+import ma.agilisys.devis.mappers.ClientMapper;
 import ma.agilisys.devis.mappers.DevisLigneMapper;
 import ma.agilisys.devis.mappers.DevisMapper;
 import ma.agilisys.devis.models.Client;
@@ -27,6 +29,7 @@ import org.springframework.stereotype.Service;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +41,7 @@ public class DevisServiceImpl implements DevisService {
     private final DevisLigneMapper devisLigneMapper;
     private final DevisPdfFileRepository devisPdfFileRepository;
     private final ClientService clientService;
+    private final ClientMapper clientMapper;
 
     @Override
     public DevisPageDto getAllDevis(int page, int size) {
@@ -61,18 +65,15 @@ public class DevisServiceImpl implements DevisService {
     @Transactional
     @Override
     public DevisResponseDTO createDevis(DevisRequestDTO devisRequestDTO) {
+        ClientRequestDto clientDto = devisRequestDTO.getClient();
         Client clientEntity;
-        
-        // Vérifier si le client existe déjà par son ICE
-        if (clientService.existsByIce(devisRequestDTO.getClient().getIce())) {
-            // Récupérer le client existant
-            clientEntity = clientRepository.findByIce(devisRequestDTO.getClient().getIce())
-                    .orElseThrow(() -> new EntityNotFoundException("Client non trouvé avec l'ICE: " + devisRequestDTO.getClient().getIce()));
+
+        // Vérifier si le client existe par ICE
+        Optional<Client> existingClient = clientRepository.findByIce(clientDto.getIce());
+        if (existingClient.isPresent()) {
+            clientEntity = existingClient.get();
         } else {
-            // Créer un nouveau client
-            ClientResponseDto newClient = clientService.createClient(devisRequestDTO.getClient());
-            clientEntity = clientRepository.findById(newClient.getId())
-                    .orElseThrow(() -> new EntityNotFoundException("Client non trouvé après création"));
+            clientEntity = clientRepository.save(clientMapper.toEntity(clientDto));
         }
 
         Devis devis = devisMapper.toEntity(devisRequestDTO);
@@ -81,13 +82,11 @@ public class DevisServiceImpl implements DevisService {
         devis.setClient(clientEntity);
         devis.setDateCreation(ZonedDateTime.now());
         devis.setCreatedBy(clientEntity.getNom());
-        
         List<DevisLigne> lignes = devisRequestDTO.getLignes().stream()
                 .map(devisLigneMapper::toEntity)
                 .toList();
         lignes.forEach(ligne -> ligne.setDevis(devis));
         devis.setLignes(lignes);
-        
         DevisMeta meta = DevisMeta.builder()
                 .conditions(devisRequestDTO.getConditions())
                 .offreFonctionnelle(devisRequestDTO.getOffreFonctionnelle())
@@ -98,7 +97,6 @@ public class DevisServiceImpl implements DevisService {
                 .devis(devis)
                 .build();
         devis.setMeta(meta);
-        
         Devis savedDevis = devisRepository.save(devis);
         return devisMapper.toDto(savedDevis);
     }
