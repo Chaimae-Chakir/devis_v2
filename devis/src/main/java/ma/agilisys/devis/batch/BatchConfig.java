@@ -51,7 +51,7 @@ public class BatchConfig {
     public Step generatePdfStep(JobRepository jobRepository,
                                 PlatformTransactionManager transactionManager) {
         return new StepBuilder("generatePdfStep", jobRepository)
-                .<Devis, Devis>chunk(10, transactionManager)
+                .<Devis, Devis>chunk(1, transactionManager)
                 .reader(devisReader())
                 .processor(devisProcessor())
                 .writer(devisWriter())
@@ -71,12 +71,9 @@ public class BatchConfig {
                 byte[] pdf = pdfGenerator.generateDevisPdf(devis);
                 String fileName = "devis_" + devis.getNumero() + "_" +
                         ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".pdf";
-
-                // Check if PDF was generated
                 if (pdf == null || pdf.length == 0) {
                     throw new RuntimeException("Generated PDF is empty");
                 }
-
                 Optional<DevisPdfFile> existingFile = devisPdfFileRepository.findByDevis_Id(devis.getId());
                 if (existingFile.isEmpty()) {
                     DevisPdfFile newFile = new DevisPdfFile();
@@ -86,15 +83,11 @@ public class BatchConfig {
                     newFile.setDevis(devis);
                     devisPdfFileRepository.save(newFile);
                 }
-
                 log.info("PDF enregistré avec succès pour le devis ID: {}", devis.getId());
                 if (devis.getMeta() != null) {
                     devis.getMeta().setOffrePdfUrl("/api/devis/" + devis.getId() + "/pdf");
                 }
-
-                // Envoyer le message à RabbitMQ
                 documentMessageService.sendDocumentMessage(devis);
-
                 return devis;
             } catch (Exception e) {
                 log.error("Erreur lors de la génération du PDF pour le devis ID: {}", devis.getId(), e);
