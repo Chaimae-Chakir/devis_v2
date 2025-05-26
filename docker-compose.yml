@@ -23,6 +23,13 @@ services:
       - SPRING_RABBITMQ_PORT=5672
       - SPRING_RABBITMQ_USERNAME=guest
       - SPRING_RABBITMQ_PASSWORD=guest
+      - KEYCLOAK_REALM=devis
+      - KEYCLOAK_AUTH_URL=http://keycloak:8080
+      - KEYCLOAK_CLIENT_ID=devis-frontend
+      - KEYCLOAK_CLIENT_SECRET=7wOpurpNwCdfj523cxEHpRhEzpgYqj9R
+      - KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/devis
+      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/realms/devis/protocol/openid-connect/certs
+      - GENERATION_BATCH_DELAY=120000
     depends_on:
       db:
         condition: service_healthy

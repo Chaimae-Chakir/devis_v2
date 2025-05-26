@@ -24,13 +24,13 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://keycloak:8080/realms/devis
-          jwk-set-uri: http://keycloak:8080/realms/devis/protocol/openid-connect/certs
+          issuer-uri: ${KEYCLOAK_ISSUER_URI}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI}
   rabbitmq:
-    host: ${SPRING_RABBITMQ_HOST:localhost}
-    port: ${SPRING_RABBITMQ_PORT:5672}
-    username: ${SPRING_RABBITMQ_USERNAME:guest}
-    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+    host: ${SPRING_RABBITMQ_HOST}
+    port: ${SPRING_RABBITMQ_PORT}
+    username: ${SPRING_RABBITMQ_USERNAME}
+    password: ${SPRING_RABBITMQ_PASSWORD}
 
 logging:
   level:
@@ -39,13 +39,13 @@ logging:
     ma.agilisys.devis: DEBUG
 
 generation:
-  batch-delay: 120000
+  batch-delay: ${GENERATION_BATCH_DELAY}
 
 keycloak:
-  realm: devis
-  auth-server-url: http://keycloak:8080
-  resource: devis-frontend
+  realm: ${KEYCLOAK_REALM}
+  auth-server-url: ${KEYCLOAK_AUTH_URL}
+  resource: ${KEYCLOAK_CLIENT_ID}
   public-client: true
   principal-attribute: preferred_username
   credentials:
-    secret: 7wOpurpNwCdfj523cxEHpRhEzpgYqj9R
+    secret: ${KEYCLOAK_CLIENT_SECRET}
