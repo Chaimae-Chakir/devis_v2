@@ -49,3 +49,27 @@ keycloak:
   principal-attribute: preferred_username
   credentials:
     secret: ${KEYCLOAK_CLIENT_SECRET}
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      documentGeneration:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+  retry:
+    instances:
+      documentGeneration:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - org.springframework.amqp.AmqpException
+          - java.net.ConnectException
+          - java.net.SocketTimeoutException

@@ -34,7 +34,7 @@ public class Devis {
     @JoinColumn(name = "id_client", nullable = false)
     private Client client;
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false)
     private String statut;
 
     @Column(name = "date_creation")
@@ -68,6 +68,12 @@ public class Devis {
 
     @OneToOne(mappedBy = "devis", cascade = CascadeType.ALL, orphanRemoval = true)
     private DevisPdfFile devisPdfFile;
+
+    @Column(name = "document_url", length = 255)
+    private String documentUrl;
+
+    @Column(name = "status", length = 20)
+    private String status;
 
     @PrePersist
     public void prePersist() {

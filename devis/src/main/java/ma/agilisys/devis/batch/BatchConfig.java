@@ -69,11 +69,10 @@ public class BatchConfig {
             try {
                 log.info("Génération du PDF pour le devis ID: {}", devis.getId());
                 byte[] pdf = pdfGenerator.generateDevisPdf(devis);
-                String fileName = "devis_" + devis.getNumero() + "_" +
-                        ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".pdf";
-                if (pdf == null || pdf.length == 0) {
-                    throw new RuntimeException("Generated PDF is empty");
-                }
+                String fileName = "devis_" + devis.getNumero() + ".pdf";
+//                if (pdf == null || pdf.length == 0) {
+//                    throw new RuntimeException("Generated PDF is empty");
+//                }
                 Optional<DevisPdfFile> existingFile = devisPdfFileRepository.findByDevis_Id(devis.getId());
                 if (existingFile.isEmpty()) {
                     DevisPdfFile newFile = new DevisPdfFile();
